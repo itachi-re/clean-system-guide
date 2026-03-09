@@ -95,20 +95,32 @@ For power users, here’s a **20-line script** that auto-sorts into multiple cat
 ```bash
 mkdir -p phone desktop 4k ultrawide vertical
 
-for img in *.(jpg|png); do
+for img in *.jpg *.png; do
+    [ -e "$img" ] || continue
+
     size=$(file "$img" | grep -o '[0-9]\+ x [0-9]\+')
     w=${size%x*}
     h=${size#*x }
 
+    dest=""
+
     if (( w > h )); then
-        mv "$img" desktop/
-        if (( w >= 3840 && h >= 2160 )); then mv "$img" 4k/; fi
-        if (( w/h > 2 )); then mv "$img" ultrawide/; fi
+        dest="desktop"
+        if (( w >= 3840 && h >= 2160 )); then
+            dest="4k"
+        elif (( w/h > 2 )); then
+            dest="ultrawide"
+        fi
     else
-        mv "$img" phone/
-        if (( h > w )); then mv "$img" vertical/; fi
+        dest="phone"
+        if (( h > w )); then
+            dest="vertical"
+        fi
     fi
+
+    mv "$img" "$dest/"
 done
+
 ```
 
 ### Output folders:
