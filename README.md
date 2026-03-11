@@ -84,6 +84,6 @@ MIT License - Do whatever you want with these guides. If they help you keep your
 
 ---
 
-**Status:** Active | **Last Updated:** 2025-02
+**Status:** Active | **Last Updated:** Wednesday, March 11, 2026 3:26 PM
 
-*"The best system is one you understand completely."*
+*"The best system is one you understand and have control over completely."*
