@@ -8,9 +8,10 @@
 
 ## What Is This?
 
-A command-by-command reference for FFmpeg 7.x. Every flag is explained so you know
-what it does before running it. Covers CPU and AMD GPU (AMF) encoding, all major codecs,
-container formats, and real-world use-case recipes.
+A command-by-command reference for FFmpeg 8.1 "Hoare" (latest stable: 8.1.1, released
+May 4 2026). Every flag is explained so you know what it does before running it. Covers
+CPU and AMD GPU (AMF + Vulkan) encoding, all major codecs, container formats, and
+real-world use-case recipes.
 
 **Philosophy:** Choose codecs with intent. Understand the quality/size/speed triangle.
 Automate batch work. Keep audio and video decisions separate.
@@ -21,25 +22,47 @@ Automate batch work. Keep audio and video decisions separate.
 
 | | |
 |---|---|
-| **FFmpeg Version** | 7.x (latest stable) |
+| **FFmpeg Version** | 8.1.1 (8.1 "Hoare" branch — latest stable) |
 | **Target System** | Linux (openSUSE) |
-| **Hardware** | AMD CPU + AMD GPU (AMF hardware acceleration) |
+| **Hardware** | AMD CPU + AMD GPU (AMF + Vulkan hardware acceleration) |
 | **Install Method** | Static binary — no package manager required |
 
 ---
 
 ## Getting FFmpeg (Portable, No Package Manager)
 
+FFmpeg only distributes source code. For ready-to-run Linux binaries, two maintained
+sources exist:
+
+**Option A — BtbN Builds (officially listed on ffmpeg.org)**
+
 ```bash
-# Download latest static build (includes all codecs compiled in)
+# Download the latest Linux amd64 static build from BtbN (recommended)
+# Visit https://github.com/BtbN/FFmpeg-Builds/releases for the latest filename
+wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+tar -xf ffmpeg-master-latest-linux64-gpl.tar.xz
+
+# Move to your AppImages directory
+mv ffmpeg-master-latest-linux64-gpl/bin/ffmpeg  /data/itachi/AppImages/
+mv ffmpeg-master-latest-linux64-gpl/bin/ffprobe /data/itachi/AppImages/
+```
+
+**Option B — John Van Sickle Static Builds (community-maintained, kernel 3.2+)**
+
+```bash
+# Download latest stable release static build
 wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz.md5
+md5sum -c ffmpeg-release-amd64-static.tar.xz.md5   # verify integrity first
 tar -xf ffmpeg-release-amd64-static.tar.xz
 
 # Move to your AppImages directory
-mv ffmpeg-7.*-amd64-static/ffmpeg   /data/itachi/AppImages/
-mv ffmpeg-7.*-amd64-static/ffprobe  /data/itachi/AppImages/
+mv ffmpeg-*-amd64-static/ffmpeg  /data/itachi/AppImages/
+mv ffmpeg-*-amd64-static/ffprobe /data/itachi/AppImages/
+```
 
-# Add aliases in ~/.bashrc
+```bash
+# Add aliases in ~/.bashrc (adjust path if you installed elsewhere)
 alias ffmpeg='/data/itachi/AppImages/ffmpeg'
 alias ffprobe='/data/itachi/AppImages/ffprobe'
 ```
@@ -47,13 +70,17 @@ alias ffprobe='/data/itachi/AppImages/ffprobe'
 Verify codecs and hardware support:
 
 ```bash
-ffmpeg -encoders | grep -E "libx264|libx265|libsvtav1|libopus|amf"
-ffmpeg -hwaccels                       # list hardware acceleration methods
-ffmpeg -encoders | grep amf            # check AMD AMF availability
+ffmpeg -version                                    # confirm 8.1.x
+ffmpeg -encoders | grep -E "libx264|libx265|libsvtav1|libopus|amf|vulkan"
+ffmpeg -hwaccels                                   # list hardware acceleration methods
+ffmpeg -encoders | grep amf                        # check AMD AMF availability
+ffmpeg -filters | grep vulkan                      # check Vulkan filter support
 ```
 
-> The static build includes libx264, libx265, libsvtav1, libvpx-vp9, libopus, libmp3lame,
-> and usually AMF. If AMF is missing, you need a build with `--enable-amf`.
+> Both static build sources include libx264, libx265, libsvtav1, libvpx-vp9, libopus,
+> libmp3lame, and usually AMF. If AMF is missing, you need a build compiled with
+> `--enable-amf`. BtbN GPL builds include most non-free encoders. johnvansickle builds
+> are GPL-licensed and also include the full codec set.
 
 ---
 
@@ -88,7 +115,74 @@ What matters most?
 
 ---
 
-## Part 1 — Core Concepts
+## What's New in FFmpeg 8.1 "Hoare"
+
+Released March 16, 2026 — about 7 months after FFmpeg 8.0 (August 2025). The name
+"Hoare" honours computer scientist Sir Tony Hoare, inventor of Quicksort and Hoare logic.
+The latest point release is **8.1.1** (May 4, 2026), which is what you should be running.
+
+### Highlights for Linux / AMD Users
+
+**Vulkan compute — no more GLSL compilation at startup**
+
+The most practically noticeable change for daily use: Vulkan compute-based codecs and
+filters no longer require runtime GLSL shader compilation. Initialization is significantly
+faster, making Vulkan pipelines viable for short or scripted runs where startup overhead
+previously hurt.
+
+**New Vulkan codec support**
+
+ProRes encoding and decoding, and DPX decoding now run via Vulkan compute shaders.
+Combined with the swscale Vulkan backend added in 8.1, more of a full GPU pipeline is
+now possible without dropping to CPU.
+
+**New filters**
+
+| Filter | What it does |
+|---|---|
+| `drawvg` | Draw SVG vector graphics onto video frames (requires libcairo) |
+| `vpp_amf` | AMD AMF video post-processing filter — sharpening, denoise on the GPU |
+
+The `vpp_amf` filter is particularly useful with AMD hardware — it lets you apply
+post-processing directly on the GPU without a CPU round-trip.
+
+**Rockchip hardware encoding**
+
+H.264 and HEVC hardware encoding on Rockchip SoCs via `h264_rkmpp` and `hevc_rkmpp`.
+Not relevant for AMD, but notable if you run FFmpeg on an ARM SBC.
+
+**New decoders / formats**
+
+| Item | Notes |
+|---|---|
+| xHE-AAC via libmpeghdec | Experimental MPEG-H 3D Audio decode — requires the external `libmpeghdec` library |
+| IAMF Ambisonic Audio | Projection-mode Ambisonic muxing and demuxing |
+| HXVS demuxer | Handles HXVS/HXVT IP camera container formats |
+| JPEG-XS | Parser, encoding and decoding via `libsvtjpegxs`, raw bitstream mux/demux |
+| EXIF metadata | FFmpeg can now parse EXIF metadata from relevant containers |
+
+**D3D12 encoders and filters (Windows-only, listed for reference)**
+
+`h264_d3d12`, `av1_d3d12` hardware encoders, plus `scale_d3d12`, `mestimate_d3d12`,
+and `deinterlace_d3d12` filters — GPU-accelerated via Direct3D 12 on Windows. These
+don't apply on Linux but explain why the 8.1 notes mention D3D12 so prominently.
+
+**Internal / infrastructure changes**
+
+- Groundwork for the upcoming **swscale rewrite** is progressing (not complete yet)
+- Old HLS protocol handler removed — use the new one (behaviour is the same for most use cases)
+- ffprobe gains `--show-refs` flag for stream section frame inspection
+
+### Quick Version Check
+
+```bash
+ffmpeg -version | head -2
+# Should show: ffmpeg version 8.1.1-static or similar
+```
+
+---
+
+
 
 ### Streams, Containers, and Codecs
 
@@ -492,6 +586,30 @@ ffmpeg -i input.mkv \
   -c:a libopus -b:a 128k \
   output.mkv
 ```
+
+#### vpp_amf — AMD GPU Post-Processing Filter (New in 8.1)
+
+The `vpp_amf` filter runs sharpening and denoise directly on the GPU, avoiding a
+CPU round-trip between filter and encode. Chain it before the AMF encoder:
+
+```bash
+# Sharpen on GPU, then encode with hevc_amf
+ffmpeg -i input.mkv \
+  -vf "vpp_amf=sharpness=0.5" \
+  -c:v hevc_amf -rc cqp -qp_i 22 -quality quality \
+  -c:a copy \
+  output.mkv
+
+# Denoise on GPU, then encode
+ffmpeg -i input.mkv \
+  -vf "vpp_amf=denoise=0.5" \
+  -c:v hevc_amf -rc cqp -qp_i 22 -quality quality \
+  -c:a copy \
+  output.mkv
+```
+
+> `vpp_amf` keeps data GPU-resident — no PCIe transfer back to RAM for filtering.
+> Check available options with: `ffmpeg -h filter=vpp_amf`
 
 #### AMD Hybrid Pipeline: VAAPI Decode + AMF Encode
 
@@ -1234,7 +1352,214 @@ done
 
 ---
 
-## Part 9 — Troubleshooting
+## Part 9 — Linux GUI Frontends & Ecosystem
+
+FFmpeg is a command-line tool, but several excellent open-source GUIs wrap it for
+users who prefer point-and-click workflows or need a quick operation without constructing
+a command. These all run natively on Linux.
+
+### For Lossless Cutting and Trimming
+
+**LosslessCut** — `github.com/mifi/lossless-cut`
+
+The most focused tool for its purpose. LosslessCut uses FFmpeg under the hood to cut,
+trim, and split video files without re-encoding — preserving 100% quality. A 10 GB file
+trimmed in seconds. Available as an AppImage, Flatpak, and via package managers.
+
+Best for: quickly chopping long recordings, removing intros/outros, splitting captures.
+Not a full editor — no effects, no re-encoding options.
+
+```bash
+# Install via Flatpak
+flatpak install flathub no.mifi.losslesscut
+```
+
+**Avidemux** — `avidemux.sourceforge.net`
+
+Simple GUI video editor with preview playback. Supports cutting, filtering, encoding,
+and basic subtitle insertion. Uses its own internal FFmpeg-derived engine. Good for
+users who need a visual timeline without a full NLE.
+
+Best for: frame-accurate cuts with preview, basic deinterlacing/filtering, light encoding
+jobs.
+
+```bash
+# openSUSE
+sudo zypper install avidemux
+# Or download AppImage from the official site
+```
+
+### For Transcoding and Format Conversion
+
+**HandBrake** — `handbrake.fr`
+
+The most popular open-source transcoder. Always re-encodes (no lossless copy), but
+offers a polished GUI with presets for devices, quality sliders, subtitle embedding, and
+chapter markers. Uses an internal FFmpeg build and supports H.264, H.265, AV1, VP9.
+
+Best for: converting video for devices, Plex libraries, compression-focused workflows.
+Not for lossless work.
+
+```bash
+# Flatpak (recommended — always up to date)
+flatpak install flathub fr.handbrake.ghb
+# openSUSE repo
+sudo zypper install HandBrake-gtk
+```
+
+**Videomass** — `jeanslack.github.io/Videomass`
+
+A direct FFmpeg GUI frontend — it doesn't hide FFmpeg behind abstractions. You can
+apply presets, see the exact FFmpeg command being generated, and customise every
+parameter. Written in Python 3 + wxPython. Available on Linux, macOS, Windows, and
+FreeBSD.
+
+Best for: power users who want a GUI that stays transparent about what FFmpeg is doing.
+Good for batch jobs, filter chaining, and custom codec settings.
+
+```bash
+# Via pip
+pip install videomass
+# Or Flatpak
+flatpak install flathub io.github.jeanslack.videomass
+```
+
+**QWinFF** — `qwinff.github.io`
+
+Lightweight Qt-based FFmpeg frontend. Preset library, per-file settings, lets you set
+thread count. Good for simple single-file or small batch conversions.
+
+Best for: users who want a minimal GUI for common conversions without overhead.
+
+```bash
+# Debian/Ubuntu
+sudo apt install qwinff
+# openSUSE via community repo — or build from source
+```
+
+### For Full Non-Linear Editing
+
+These are proper video editors built on FFmpeg (and/or GStreamer). Include them in your
+toolkit when you need to cut, arrange, add effects, or composite.
+
+**Kdenlive** — `kdenlive.org`
+
+KDE's flagship video editor. Multi-track timeline, real-time effects, chroma key,
+colour grading, hardware acceleration, 4K support. Very actively developed — releases
+monthly. Available as Flatpak, Snap, or native package.
+
+```bash
+flatpak install flathub org.kde.kdenlive
+```
+
+**Shotcut** — `shotcut.org`
+
+Cross-platform non-linear editor with native timeline editing, many built-in filters,
+4K support, and no project file format lock-in (uses MLT XML). Available as AppImage
+and Flatpak.
+
+```bash
+flatpak install flathub org.shotcut.Shotcut
+```
+
+### For MKV Workflows
+
+**MKVToolNix** — `mkvtoolnix.download`
+
+Not an FFmpeg frontend, but an essential companion for MKV files. Lets you merge,
+split, extract tracks, set chapter markers, and edit metadata in MKV containers without
+re-encoding. The GUI (`mkvtoolnix-gui`) is one of the best tools in the Linux multimedia
+stack.
+
+```bash
+# openSUSE
+sudo zypper install mkvtoolnix mkvtoolnix-gui
+# Flatpak
+flatpak install flathub org.bunkus.mkvtoolnix-gui
+```
+
+### Choosing the Right Tool
+
+| Need | Tool |
+|---|---|
+| Trim/cut without re-encoding | LosslessCut |
+| Transcode to H.264/H.265/AV1 with a GUI | HandBrake or Videomass |
+| See the actual FFmpeg command being built | Videomass |
+| Full non-linear editing | Kdenlive or Shotcut |
+| MKV track management without re-encode | MKVToolNix |
+| Simple encoder GUI, minimal overhead | QWinFF |
+| Frame-accurate cut with preview | Avidemux |
+
+---
+
+## Part 10 — Resources & Reference Links
+
+### Official FFmpeg
+
+| Resource | URL |
+|---|---|
+| Official website | https://ffmpeg.org |
+| Download page (source + binary links) | https://ffmpeg.org/download.html |
+| Official documentation | https://ffmpeg.org/documentation.html |
+| FFmpeg Wiki (filters, guides, compilation) | https://trac.ffmpeg.org/wiki |
+| Compilation guide for Linux (from source) | https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu |
+| Bug tracker | https://trac.ffmpeg.org |
+| GitHub mirror | https://github.com/FFmpeg/FFmpeg |
+| Security advisories | https://ffmpeg.org/security.html |
+
+### Pre-built Linux Binaries
+
+| Source | URL | Notes |
+|---|---|---|
+| BtbN Builds | https://github.com/BtbN/FFmpeg-Builds/releases | Listed on official ffmpeg.org download page; GPL + LGPL variants |
+| John Van Sickle | https://johnvansickle.com/ffmpeg/ | Long-running community build; Linux kernel 3.2+; GPL |
+
+> The official ffmpeg.org download page now points to BtbN for Linux static builds.
+> johnvansickle.com remains a valid and well-maintained option, especially for older
+> kernel compatibility.
+
+### FFmpeg 8.1 "Hoare" Specific
+
+| Resource | URL |
+|---|---|
+| Release announcement | https://ffmpeg.org/index.html#pr8.1 |
+| Khronos blog: Vulkan compute shaders in FFmpeg | https://www.khronos.org/blog/video-encoding-and-decoding-with-vulkan-compute-shaders-in-ffmpeg |
+| Phoronix FFmpeg 8.1 coverage | https://www.phoronix.com/news/FFmpeg-8.1-Coming-Soon |
+| 9to5Linux release roundup | https://9to5linux.com/ffmpeg-8-1-hoare-multimedia-framework-brings-d3d12-h-264-av1-encoding |
+
+### Codec and Format Documentation
+
+| Resource | URL |
+|---|---|
+| H.264 encoding guide | https://trac.ffmpeg.org/wiki/Encode/H.264 |
+| H.265 encoding guide | https://trac.ffmpeg.org/wiki/Encode/H.265 |
+| AV1 encoding guide | https://trac.ffmpeg.org/wiki/Encode/AV1 |
+| VP9 encoding guide | https://trac.ffmpeg.org/wiki/Encode/VP9 |
+| Audio encoding guide | https://trac.ffmpeg.org/wiki/Encode/HighQualityAudio |
+| Seeking (fast vs accurate) | https://trac.ffmpeg.org/wiki/Seeking |
+| Map option documentation | https://trac.ffmpeg.org/wiki/Map |
+| Hardware acceleration guide | https://trac.ffmpeg.org/wiki/HWAccelIntro |
+
+### AMD / Vulkan Specific
+
+| Resource | URL |
+|---|---|
+| AMDGPU driver for Linux | https://www.amd.com/en/support/linux-drivers |
+| Vulkan AMD Linux setup | https://wiki.archlinux.org/title/Vulkan |
+| AMF SDK on GitHub | https://github.com/GPUOpen-LibrariesAndSDKs/AMF |
+
+### Community
+
+| Resource | URL |
+|---|---|
+| r/ffmpeg subreddit | https://www.reddit.com/r/ffmpeg/ |
+| FFmpeg mailing list archives | https://lists.ffmpeg.org/pipermail/ffmpeg-user/ |
+| Stack Overflow [ffmpeg] tag | https://stackoverflow.com/questions/tagged/ffmpeg |
+| VideoHelp forum (encoding) | https://www.videohelp.com/forum |
+
+---
+
+## Part 11 — Troubleshooting
 
 ### Check Available Encoders and Hardware
 
@@ -1300,6 +1625,8 @@ ffmpeg -v verbose -i input.mkv -c:v libx264 -crf 23 output.mp4 2>&1 | tee encode
 
 ---
 
-*FFmpeg 7.x — Tested on openSUSE Linux with AMD hardware.*
-*Static build: [johnvansickle.com/ffmpeg](https://johnvansickle.com/ffmpeg)*
+*FFmpeg 8.1.1 "Hoare" — Tested on openSUSE Linux with AMD hardware.*
+*Official static build source: [BtbN FFmpeg Builds](https://github.com/BtbN/FFmpeg-Builds/releases)*
+*Alternative static builds: [johnvansickle.com/ffmpeg](https://johnvansickle.com/ffmpeg)*
 *AMF requires amdgpu drivers and FFmpeg compiled with `--enable-amf`.*
+*Vulkan codec support requires Mesa/AMDGPU with Vulkan driver (radv recommended).*
