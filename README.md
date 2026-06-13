@@ -1,13 +1,26 @@
 # Clean System Guide
 
-> Battle-tested guides from my ongoing journey through Linux system administration.
-> Real problems. Real solutions. No hand-waving.
+> You shouldn't have to blindly trust a script to get software installed.
+> This repo is for people who want to know exactly what's happening to their system — and why.
 
 ---
 
-## What Is This?
+## The Problem With Most Linux Guides
 
-This repository documents my journey of keeping a Linux system clean, minimal, and fully understood. Every guide here was born from a real problem I hit — a broken install, a cluttered system, a dependency I didn't want, or a workflow that needed to be smoother.
+They ask too much of you upfront:
+
+- *"Add this third-party repo"* — and trust it forever
+- *"Run this installer script"* — without reading it first
+- *"Just install these 12 dependencies"* — and hope nothing conflicts
+- *"It works on my machine"* — yours may vary
+
+If you've ever paused before `sudo bash install.sh` and thought *"wait, what does this actually do?"* — this repo is for you.
+
+---
+
+## What This Is
+
+Battle-tested guides for keeping a Linux system clean, minimal, and fully understood. Every guide here was born from a real problem — a broken install, a cluttered system, an unwanted dependency, or a workflow that needed to be smoother.
 
 **Philosophy:** Understand what you install. Keep what you need. Automate what you repeat. Trust nothing blindly.
 
@@ -17,7 +30,7 @@ This repository documents my journey of keeping a Linux system clean, minimal, a
 
 | | |
 |---|---|
-| **Distro** | openSUSE |
+| **Distro** | openSUSE Tumbleweed |
 | **Approach** | Minimal installs, portable apps, manual control |
 | **App Storage** | `/data/itachi/AppImages/` |
 
@@ -37,14 +50,27 @@ This repository documents my journey of keeping a Linux system clean, minimal, a
 | Guide | What It Solves |
 |---|---|
 | [Linux Archiving Guide](./linux-archiving-guide.md) | `tar`, compression formats, and knowing which to use when |
+| [Linux Archive Extraction Guide](./linux-archive-extraction-guide.md) | Extracting any archive format cleanly, without guessing flags |
 | [Photo Management Guide](./photo-management-guide.md) | Managing photos without cloud dependency or bloated software |
 
-### 💻 Development Tools
+### 🎬 Media & Multimedia
+
+| Guide | What It Solves |
+|---|---|
+| [FFmpeg Guide](./ffmpeg-guide.md) | Encoding, converting, and processing media from the terminal |
+
+### 💻 Development & Software
 
 | Guide | What It Solves |
 |---|---|
 | [VS Code Without Microsoft's Repo](./vscode-installation.md) | Portable VS Code / VSCodium with zero package manager involvement |
 | [Antigravity Installation](./antigravity-installation.md) | Clean install of Antigravity with no system-wide side effects |
+
+### 🎮 Gaming
+
+| Guide | What It Solves |
+|---|---|
+| [Games from ISO with Lutris](./install-games-iso-lutris-linux.md) | Running ISO-based games on Linux without polluting the system |
 
 ### 🐚 Shell & Terminal
 
@@ -65,16 +91,9 @@ Every guide follows the same structure so you can quickly find what you need:
 
 ---
 
-## Why This Exists
+## Why Each Solution Is Done This Way
 
-Most Linux guides assume you're fine with:
-
-- Adding unknown third-party repositories
-- Installing a chain of dependencies you'll never audit
-- Running installer scripts from the internet
-- Cluttering your system in ways you can't easily undo
-
-This repo takes the opposite approach. Every solution here prioritizes:
+Every solution here is built around five constraints:
 
 - ✅ **Transparency** — You know exactly what's being installed and why
 - ✅ **Portability** — Self-contained where possible, easy to move or remove
@@ -82,11 +101,13 @@ This repo takes the opposite approach. Every solution here prioritizes:
 - ✅ **Minimal trust** — Fewer parties in the chain between you and the software
 - ✅ **Readable automation** — Scripts you can audit and modify, not black boxes
 
+These aren't ideals. They're requirements. A guide that violates them doesn't belong here.
+
 ---
 
 ## Roadmap
 
-More guides coming as I run into new problems worth documenting. If you've solved something cleanly that fits this philosophy, PRs are open.
+More guides coming as I run into new problems worth documenting.
 
 **Planned additions:**
 - Flatpak vs AppImage decision guide
@@ -104,6 +125,8 @@ More guides coming as I run into new problems worth documenting. If you've solve
 - Explain the *why*, not just the *how*
 - No "just run this script" without explaining what it does
 
+PRs are open if you've solved something cleanly that fits this philosophy.
+
 ---
 
 ## Disclaimer
@@ -120,6 +143,6 @@ MIT — Use it, fork it, adapt it. If it helps you keep a cleaner system, that's
 
 ---
 
-**Status:** Active &nbsp;|&nbsp; **Last Updated:** May 2026
+**Status:** Active &nbsp;|&nbsp; **Guides:** 10 &nbsp;|&nbsp; **Last Updated:** June 2026
 
 *"The best system is one you understand completely and control entirely."*
