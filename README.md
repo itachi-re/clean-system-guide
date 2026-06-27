@@ -31,6 +31,8 @@ Battle-tested guides for keeping a Linux system clean, minimal, and fully unders
 | | |
 |---|---|
 | **Distro** | openSUSE Tumbleweed |
+| **Desktop** | KDE Plasma (Wayland) |
+| **Shell** | zsh |
 | **Approach** | Minimal installs, portable apps, manual control |
 | **App Storage** | `/data/itachi/AppImages/` |
 
@@ -78,6 +80,12 @@ Battle-tested guides for keeping a Linux system clean, minimal, and fully unders
 |---|---|
 | [Shell Aliases](./shell-aliases.md) | Aliases that actually save time — the ones I kept after pruning the rest |
 
+### 🗂 Dotfiles & Configuration
+
+| Guide | What It Solves |
+|---|---|
+| [GNU Stow Dotfiles](./gnu-stow-dotfiles.md) | Version-controlled config files with symlinks managed automatically — no manual linking, no drift |
+
 ---
 
 ## Guide Format
@@ -86,7 +94,7 @@ Every guide follows the same structure so you can quickly find what you need:
 
 1. **The Problem** — What broke, what was missing, or what needed to improve
 2. **The Clean Solution** — How to fix it without polluting the system
-3. **The Script** — Automation to make it repeatable
+3. **The Commands / Workflow** — Exact steps with explanation of each one
 4. **Alternatives** — Other approaches, and why I went this direction instead
 
 ---
@@ -112,7 +120,7 @@ More guides coming as I run into new problems worth documenting.
 **Planned additions:**
 - Flatpak vs AppImage decision guide
 - Setting up a minimal dev environment from scratch
-- Dotfile management without a framework
+- Dotfile management without any tooling (pure symlinks, manual approach)
 - *...and whatever breaks next*
 
 ---
@@ -143,6 +151,6 @@ MIT — Use it, fork it, adapt it. If it helps you keep a cleaner system, that's
 
 ---
 
-**Status:** Active &nbsp;|&nbsp; **Guides:** 10 &nbsp;|&nbsp; **Last Updated:** June 2026
+**Status:** Active &nbsp;|&nbsp; **Guides:** 11 &nbsp;|&nbsp; **Last Updated:** June 2026
 
 *"The best system is one you understand completely and control entirely."*
