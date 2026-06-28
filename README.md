@@ -55,6 +55,12 @@ Battle-tested guides for keeping a Linux system clean, minimal, and fully unders
 | [Linux Archive Extraction Guide](./linux-archive-extraction-guide.md) | Extracting any archive format cleanly, without guessing flags |
 | [Photo Management Guide](./photo-management-guide.md) | Managing photos without cloud dependency or bloated software |
 
+### 🌐 Downloads & Networking
+
+| Guide | What It Solves |
+|---|---|
+| [Aria2c Guide](./aria2c-guide.md) | Multi-connection, resumable downloads from the terminal — no GUI, no daemon, no wasted bandwidth |
+
 ### 🎬 Media & Multimedia
 
 | Guide | What It Solves |
@@ -151,6 +157,6 @@ MIT — Use it, fork it, adapt it. If it helps you keep a cleaner system, that's
 
 ---
 
-**Status:** Active &nbsp;|&nbsp; **Guides:** 11 &nbsp;|&nbsp; **Last Updated:** June 2026
+**Status:** Active &nbsp;|&nbsp; **Guides:** 12 &nbsp;|&nbsp; **Last Updated:** June 2026
 
 *"The best system is one you understand completely and control entirely."*
