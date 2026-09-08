@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧼 Clean System Guide
+<img src="./assets/img/banner-csg.png" alt="Clean System Guide" width="100%">
 
 ### Practical, transparent Linux guides for people who want to know what's happening to their system.
 
