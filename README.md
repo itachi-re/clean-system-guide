@@ -5,20 +5,22 @@
 ### Practical, transparent Linux guides for people who want to know what's happening to their system.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux-FCC624?logo=linux&logoColor=black)](#)
-[![Distro Agnostic](https://img.shields.io/badge/Distro-Agnostic-informational)](#)
-[![openSUSE Tumbleweed](https://img.shields.io/badge/openSUSE-Tumbleweed-73BA25?logo=opensuse&logoColor=white)](#)
-[![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1?logo=archlinux&logoColor=white)](#)
-[![Fedora](https://img.shields.io/badge/Fedora-Linux-51A2DA?logo=fedora&logoColor=white)](#)
-[![Debian/Ubuntu](https://img.shields.io/badge/Debian%2FUbuntu-supported-A81D33?logo=debian&logoColor=white)](#)
-[![KDE Plasma](https://img.shields.io/badge/DE-KDE%20Plasma-1D99F3?logo=kdeplasma&logoColor=white)](#)
-[![Wayland](https://img.shields.io/badge/Display-Wayland-FBB03B)](#)
-[![Shell](https://img.shields.io/badge/Shell-zsh-89E051?logo=gnu-bash&logoColor=white)](#)
 [![Guides](https://img.shields.io/badge/Guides-19-success)](#-guide-index)
-[![Maintained](https://img.shields.io/badge/Maintained-yes-brightgreen)](#)
-[![Last Updated](https://img.shields.io/badge/Updated-September%202026-orange)](#)
+[![Last commit](https://img.shields.io/github/last-commit/itachi-re/clean-system-guide?logo=git&logoColor=white&label=Last%20commit)](https://github.com/itachi-re/clean-system-guide/commits/main)
+[![Stars](https://img.shields.io/github/stars/itachi-re/clean-system-guide?logo=github&logoColor=white&label=Stars)](https://github.com/itachi-re/clean-system-guide/stargazers)
+[![Issues](https://img.shields.io/github/issues/itachi-re/clean-system-guide?logo=github&logoColor=white&label=Issues)](https://github.com/itachi-re/clean-system-guide/issues)
 
-**[Guide Index](#-guide-index)** · **[Philosophy](#-philosophy)** · **[Quick Start](#-quick-start)** · **[Contributing](#-contributing)** · **[FAQ](#-faq)**
+[![Platform](https://img.shields.io/badge/Platform-Linux-FCC624?logo=linux&logoColor=black)](https://www.kernel.org)
+[![Distro Agnostic](https://img.shields.io/badge/Distro-Agnostic-informational)](#-environment-this-repo-is-built-on)
+[![openSUSE Tumbleweed](https://img.shields.io/badge/openSUSE-Tumbleweed-73BA25?logo=opensuse&logoColor=white)](https://www.opensuse.org)
+[![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1?logo=archlinux&logoColor=white)](https://archlinux.org)
+[![Fedora](https://img.shields.io/badge/Fedora-Linux-51A2DA?logo=fedora&logoColor=white)](https://fedoraproject.org)
+[![Debian/Ubuntu](https://img.shields.io/badge/Debian%2FUbuntu-supported-A81D33?logo=debian&logoColor=white)](https://www.debian.org)
+[![KDE Plasma](https://img.shields.io/badge/DE-KDE%20Plasma-1D99F3?logo=kdeplasma&logoColor=white)](https://kde.org/plasma-desktop/)
+[![Wayland](https://img.shields.io/badge/Display-Wayland-FBB03B)](https://wayland.freedesktop.org)
+[![Shell](https://img.shields.io/badge/Shell-zsh-89E051?logo=gnu-bash&logoColor=white)](https://www.zsh.org)
+
+**[Guide Index](#-guide-index)** · **[Find by Goal](#-find-a-guide-by-goal)** · **[Philosophy](#-philosophy)** · **[Quick Start](#-quick-start)** · **[Contributing](#-contributing)** · **[FAQ](#-faq)** · **[Roadmap](#-roadmap)**
 
 </div>
 
@@ -72,22 +74,41 @@ These aren't aspirations — they're requirements. A guide that violates them do
 ## 🚀 Quick Start
 
 ```bash
+# HTTPS
 git clone https://github.com/itachi-re/clean-system-guide.git
+
+# or SSH
+git clone git@github.com:itachi-re/clean-system-guide.git
+
 cd clean-system-guide
 ```
 
-Guides are organized into topic folders. Browse the [Guide Index](#-guide-index) below, or jump straight to a category:
+Only want the latest snapshot, without history? Use a shallow clone:
 
 ```bash
-# Example: reading the aria2c guide before touching your download setup
+git clone --depth 1 https://github.com/itachi-re/clean-system-guide.git
+```
+
+Guides are organized into topic folders. Browse the [Guide Index](#-guide-index) below, or jump straight to a guide:
+
+```bash
+# Read a guide before touching your download setup
 less files/aria2c-guide.md
+
+# Search every guide for a command or package manager
+grep -rn --include="*.md" "zypper" .
 ```
 
 No build step, no dependencies, no tooling required — it's Markdown, meant to be read.
 
+> [!NOTE]
+> Read a guide **before** you run anything from it. The whole point of this repository is that you understand each step first. Every guide explains what a command touches and how to undo it.
+
 ---
 
 ## 🗂 Guide Index
+
+**19 guides** across 8 topics, plus helper scripts.
 
 ### 🖋 editors/
 
@@ -146,7 +167,7 @@ No build step, no dependencies, no tooling required — it's Markdown, meant to 
 
 | Guide | Solves |
 |---|---|
-| [Games from ISO with Lutris](./gaming/install-games-iso-lutris-linux.md) | Running ISO-based games on Linux without polluting the system |
+| [Games from ISO with Lutris](./gaming/install-games-iso-lutris-linux.md) | Running ISO-based games on Linux without polluting the system — extract, mount, install through a managed Wine prefix, and leave no stray mounts or prefixes behind |
 
 ### ⚙️ scripts/
 
@@ -157,9 +178,7 @@ Helper scripts referenced by the guides above — kept separate since they're me
 | [update-vscode.sh](./scripts/update-vscode.sh) | [VS Code Without Microsoft's Repo](./editors/vscode-installation.md) |
 | [update-antigravity.sh](./scripts/update-antigravity.sh) | [Antigravity Installation](./editors/antigravity-installation.md) |
 
-<details>
-<summary><b>⭐ Featured guides — start here if you're new</b></summary>
-<br>
+### ⭐ Start here if you're new
 
 If you only read three guides in this repository, make it these:
 
@@ -167,7 +186,28 @@ If you only read three guides in this repository, make it these:
 2. **[GNU Stow Dotfiles](./shell/gnu-stow-dotfiles.md)** — the cleanest dotfile-management approach that doesn't require learning a new tool's DSL.
 3. **[VS Code Without Microsoft's Repo](./editors/vscode-installation.md)** — a good example of the repo's core philosophy: same software, fewer trusted parties.
 
-</details>
+---
+
+## 🧭 Find a Guide by Goal
+
+Not sure which folder to look in? Start from what you're trying to do.
+
+| I want to… | Read |
+|---|---|
+| Download large files reliably, with resume | [Aria2c Guide](./files/aria2c-guide.md) |
+| Install an editor without adding a vendor's repo | [VS Code](./editors/vscode-installation.md) · [Cursor](./editors/cursor-installation.md) · [Antigravity](./editors/antigravity-installation.md) |
+| Pack or unpack archives without guessing flags | [Archiving](./files/linux-archiving-guide.md) · [Extraction](./files/linux-archive-extraction-guide.md) |
+| Delete files properly, or rename hundreds at once | [File Deletion](./files/file-deletion-guide.md) · [Batch Renaming](./files/terminal-batch-renaming-guide.md) |
+| Convert or process video and audio | [FFmpeg Guide](./media/ffmpeg-guide.md) |
+| Manage photos without the cloud | [Photo Management Guide](./media/photo-management-guide.md) |
+| Fix a flaky wired connection | [Ethernet Cable Guide](./networking/ethernet-cable-guide.md) |
+| Set up a VPN without a vendor client | [Linux VPN Guide](./networking/linux-vpn-guide.md) |
+| Fix Brave crashing, freezing, or rendering badly | [Brave Troubleshooting](./browsers/brave-linux-troubleshooting-guide.md) |
+| Free up disk space or memory safely | [Clear System Cache](./system/clear-system-cache.md) |
+| Use an offline or local repo on Fedora | [Offline Fedora Repository](./system/offline-fedora-repository-guide.md) |
+| Keep my dotfiles in git without manual linking | [GNU Stow Dotfiles](./shell/gnu-stow-dotfiles.md) |
+| Tame my terminal workflow | [Tmux Guide](./shell/tmux-guide.md) · [Shell Aliases](./shell/shell-aliases.md) |
+| Install an ISO-based Windows game cleanly | [Games from ISO with Lutris](./gaming/install-games-iso-lutris-linux.md) |
 
 ---
 
@@ -179,6 +219,7 @@ Guides live in topic-based subfolders so the repo stays navigable as it grows:
 editors/      networking/    browsers/      media/
 files/        system/        shell/         gaming/
 scripts/      ← helper scripts referenced by guides above
+assets/img/   ← banner and images used by the README
 ```
 
 Every guide follows the same four-part structure, so you always know where to look:
@@ -228,12 +269,38 @@ Package managers and path layouts diverge just enough (`zypper` vs `pacman` vs `
 |---|---|
 | **Primary distro** | openSUSE Tumbleweed |
 | **Also tested on** | Arch, Fedora, Debian/Ubuntu |
-| **Desktop** | KDE Plasma (Wayland) |
+| **Desktop** | KDE Plasma (Wayland); Hyprland and Sway also in regular use |
 | **Shell** | zsh |
+| **Terminal / Editor** | Ghostty · Konsole / Neovim |
+| **Filesystem** | Btrfs (ext4 elsewhere) |
+| **Packaging** | Custom RPMs on [OBS `home:itachi_re`](https://build.opensuse.org/project/show/home:itachi_re) |
 | **Approach** | Minimal installs, portable apps, manual control |
 | **App Storage** | `/data/itachi/AppImages/` |
 
 Your setup doesn't need to match this exactly — the guides are written to be adapted, not copy-pasted verbatim.
+
+---
+
+## 🔗 Related Projects
+
+Other repositories by the same author that pair naturally with these guides.
+
+| Project | What it is | Related guide |
+|---|---|---|
+| [.dotfiles](https://github.com/itachi-re/.dotfiles) | Personal dotfiles managed with GNU Stow | [GNU Stow Dotfiles](./shell/gnu-stow-dotfiles.md) |
+| [dotfiles-android](https://github.com/itachi-re/dotfiles-android) | Android + Termux dotfiles, configs, and scripts (MPV, FFmpeg, shell) | [FFmpeg Guide](./media/ffmpeg-guide.md) |
+| [brave-browser-obs](https://github.com/itachi-re/brave-browser-obs) | Update tracker for Brave on OBS, repackaging official RPMs with system-integration fixes | [Brave Troubleshooting](./browsers/brave-linux-troubleshooting-guide.md) |
+| [obs-auto-trigger](https://github.com/itachi-re/obs-auto-trigger) | Automated upstream version tracking and OBS rebuilds for 100+ packages | — |
+| [android-studio-obs](https://github.com/itachi-re/android-studio-obs) | Android Studio automation for openSUSE Tumbleweed on OBS | — |
+
+### 📎 Longer references
+
+Some longer, single-topic write-ups live as [gists](https://gist.github.com/itachi-re) rather than in this repo, including:
+
+- **[Android debloating reference](https://gist.github.com/itachi-re/6a8751814be39b4cf455dd64efe8d21b)** — safety-rated (🟢 / 🟡 / 🔴) removal lists, ADB, UAD-ng, and root-based methods.
+- **[Beyond systemd: Choosing the Right Init System](https://gist.github.com/itachi-re/b1d4853635db01978d1f42f76484c8c6)**
+- **ProtonVPN Linux GUI (Beta) — install and removal**, per distro (see the gist index).
+- **OpenWrt on the Imou HX21** (see the gist index).
 
 ---
 
@@ -277,6 +344,16 @@ They're marked `deprecated` with a note explaining what changed and why, rather 
 
 The repo grew past 20 flat markdown files at the root, which made browsing harder than it needed to be. Guides are now grouped by topic (editors, files, media, networking, browsers, system, shell, gaming) with `scripts/` kept separate since those are meant to be run, not read top-to-bottom.
 
+If you have an old link to a root-level file such as `install-games-iso-lutris-linux.md`, look for it in its topic folder instead (for example `gaming/`).
+
+</details>
+
+<details>
+<summary><b>How do I know a guide is still current?</b></summary>
+<br>
+
+Check the last-commit badge at the top for the repository as a whole, or run `git log -- path/to/guide.md` for a single guide. Anything no longer accurate is marked `deprecated` rather than left to rot silently.
+
 </details>
 
 ---
@@ -295,6 +372,50 @@ Contributions are welcome if they fit the repository's philosophy.
 
 Open a PR if you've solved something cleanly and it fits here. Open an issue if a guide is out of date or a command no longer works as written.
 
+<details>
+<summary><b>📋 Pull request checklist</b></summary>
+<br>
+
+- [ ] The guide solves a real problem I actually hit
+- [ ] Every command is explained, and nothing is piped blindly into a shell
+- [ ] It says what gets installed, from where, and what it touches on the system
+- [ ] It documents how to undo everything (rollback / removal)
+- [ ] Per-distro commands (`zypper` / `pacman` / `dnf` / `apt`) are called out where they differ
+- [ ] It follows the four-part structure below
+- [ ] It's in the right topic folder, and linked from the [Guide Index](#-guide-index)
+- [ ] The guide count in the README badge and footer is updated
+
+</details>
+
+<details>
+<summary><b>📝 Guide template</b></summary>
+<br>
+
+```markdown
+# Guide Title
+
+> One sentence: what this solves and for whom.
+
+**Tested on:** openSUSE Tumbleweed · Arch · Fedora · Debian/Ubuntu
+
+## 1. The Problem
+What broke, what was missing, or what needed to improve.
+
+## 2. The Clean Solution
+How to fix it without polluting the system, and what it touches.
+
+## 3. The Commands
+Exact steps, each one explained. Call out per-distro differences.
+
+## 4. Alternatives
+Other approaches, and why this one was chosen instead.
+
+## Rollback
+How to undo everything above.
+```
+
+</details>
+
 ---
 
 ## 🛣 Roadmap
@@ -310,8 +431,13 @@ Planned additions, in no particular order:
 
 ## 🌟 Star History
 
-<!-- Replace OWNER/REPO once the chart is generated -->
-[![Star History Chart](https://api.star-history.com/svg?repos=itachi-re/clean-system-guide&type=Date)](https://star-history.com/#itachi-re/clean-system-guide&Date)
+<a href="https://star-history.com/#itachi-re/clean-system-guide&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=itachi-re/clean-system-guide&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=itachi-re/clean-system-guide&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=itachi-re/clean-system-guide&type=Date" />
+  </picture>
+</a>
 
 ---
 
@@ -337,6 +463,7 @@ MIT — use it, fork it, adapt it. If it helps you run a system you actually und
 
 *"The best system is one you understand completely and control entirely."*
 
-**Status:** Active · **Guides:** 19 · **Last Updated:** September 2026
+<!-- Keep in sync with the "Guides" badge at the top and the Guide Index (currently 19). -->
+**Status:** Active · **Guides:** 19 · [![Last commit](https://img.shields.io/github/last-commit/itachi-re/clean-system-guide?style=flat-square&label=last%20commit)](https://github.com/itachi-re/clean-system-guide/commits/main)
 
 </div>
