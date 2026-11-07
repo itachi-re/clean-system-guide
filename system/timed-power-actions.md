@@ -1,14 +1,15 @@
 # ⏱️ Schedule Shutdown, Reboot & Hibernate After N Minutes on Linux
 
 > [!NOTE]
-> A practical, copy-paste guide to scheduling **power off**, **reboot**, **hibernate** and **suspend-then-hibernate** after *N* seconds, minutes or hours. Works on any **systemd** distro: **Ubuntu, Debian, Linux Mint, Fedora, RHEL-family, Arch, Manjaro, openSUSE** and more.
+> A practical, copy-paste guide to scheduling **power off**, **reboot**, **hibernate** and **suspend-then-hibernate** after *N* seconds, minutes or hours, **safely**. Works on any **systemd** distro: **Ubuntu, Debian, Linux Mint, Fedora, RHEL-family, Arch, Manjaro, openSUSE** and more.
 
 | | |
 | :--- | :--- |
 | 🎯 **Covers** | `shutdown`, `systemctl --when`, `systemd-run`, `at`, `sleep`, `suspend-then-hibernate`, idle actions in KDE, GNOME and `logind` |
-| ✅ **You will learn** | time formats, scheduling, checking, cancelling, setting up hibernate (`resume=`) per distro, and a reusable `after` shell function |
+| 🔒 **Safety** | what `sync` really does, what each action does to your files and apps, a pre-flight checklist, inhibitors, and a safe `after` wrapper |
+| ✅ **You will learn** | time formats, scheduling, checking, cancelling, setting up hibernate (`resume=`) per distro |
 | 🧩 **Requirements** | systemd, `sudo`, and for hibernate: a real swap partition or file plus a correct resume setup |
-| 🏷️ **Tags** | `linux` `systemd` `ubuntu` `debian` `fedora` `arch` `opensuse` `shutdown` `reboot` `hibernate` `cheatsheet` |
+| 🏷️ **Tags** | `linux` `systemd` `ubuntu` `debian` `fedora` `arch` `opensuse` `shutdown` `reboot` `hibernate` `sync` `cheatsheet` |
 | 📦 **Part of** | [`clean-system-guide`](https://github.com/itachi-re/clean-system-guide) |
 
 ---
@@ -17,6 +18,8 @@
 
 - [⚡ Cheat sheet](#-cheat-sheet)
 - [🧭 Which tool should I use?](#-which-tool-should-i-use)
+- [🔒 Safety first: what sync does, and what really happens](#-safety-first-what-sync-does-and-what-really-happens)
+- [📋 Pre-flight safety checklist](#-pre-flight-safety-checklist)
 - [🕒 Time formats](#-time-formats)
 - [🔴 Shutdown (power off) after N minutes/hours](#-shutdown-power-off-after-n-minuteshours)
 - [🔄 Reboot after N minutes/hours](#-reboot-after-n-minuteshours)
@@ -24,7 +27,7 @@
 - [🌓 Suspend now, hibernate later](#-suspend-now-hibernate-later)
 - [🔍 Check and cancel pending actions](#-check-and-cancel-pending-actions)
 - [💤 Hibernate only when idle](#-hibernate-only-when-idle)
-- [🧰 Handy shell function](#-handy-shell-function)
+- [🧰 Safe shell function](#-safe-shell-function)
 - [🩺 Troubleshooting](#-troubleshooting)
 - [📚 References](#-references)
 
@@ -34,17 +37,21 @@
 
 | Goal | Command |
 | :--- | :--- |
-| Power off in 30 min | `sudo shutdown -P +30` |
+| Power off in 30 min | `sudo shutdown -P +30` *(systemd syncs and unmounts for you)* |
 | Power off in 2 hours | `sudo shutdown -P +120` |
 | Reboot in 15 min | `sudo shutdown -r +15` |
-| Hibernate in 30 min | `sudo systemd-run --on-active=30m systemctl hibernate` |
+| Hibernate in 30 min, **with sync** | `sudo systemd-run --on-active=30m /bin/sh -c 'sync && systemctl hibernate'` |
 | Suspend now, hibernate after 30 min | set `HibernateDelaySec=30min`, then `systemctl suspend-then-hibernate` *(see [details](#-suspend-now-hibernate-later))* |
 | Cancel a pending shutdown/reboot | `sudo shutdown -c` |
 | Show a pending shutdown/reboot | `shutdown --show` *(systemd 250+)* |
 | Cancel a pending timer | `sudo systemctl stop <name>.timer` |
+| Flush cached writes to disk right now | `sync` |
 
 > [!IMPORTANT]
 > `shutdown` can only **power off, halt or reboot**. It cannot hibernate. For hibernate, use `systemd-run` (or `at`) as shown below.
+
+> [!CAUTION]
+> Never put forced options such as `reboot -f`, `poweroff -f`, `systemctl ... -ff` or `--no-sync` in a scheduled job. They skip the clean shutdown steps described in the [safety section](#-safety-first-what-sync-does-and-what-really-happens).
 
 ---
 
@@ -54,7 +61,7 @@
 flowchart TD
     A([Do something later]) --> B{What action?}
     B -->|Power off or reboot| C["shutdown -P +N or shutdown -r +N"]
-    B -->|Hibernate or suspend| D["systemd-run --on-active=Nm systemctl hibernate"]
+    B -->|Hibernate or suspend| D["systemd-run --on-active=Nm with sync"]
     B -->|Only after inactivity| E["Desktop power settings or logind IdleAction"]
     C --> F["Cancel: shutdown -c"]
     D --> G["Cancel: systemctl stop unit.timer"]
@@ -64,12 +71,144 @@ flowchart TD
 | :--- | :---: | :---: | :--- |
 | `shutdown` | ✅ | ❌ | Minutes only (`+m`), simple, sends a warning to logged-in users |
 | `systemctl poweroff --when=` | ✅ | ❌ | Newer systemd only, takes systemd timestamps |
-| `systemd-run --on-active=` | ✅ | ✅ | Most flexible, accepts `s`, `m`, `h` units |
+| `systemd-run --on-active=` | ✅ | ✅ | Most flexible, accepts `s`, `m`, `h` units, lets you run `sync` first |
 | `at` | ✅ | ✅ | Classic job scheduler, needs the `atd` service |
 | `sleep N && cmd` | ✅ | ✅ | Quick and dirty, dies if the terminal closes |
 
 > [!NOTE]
 > Every command here needs systemd. That covers Ubuntu, Debian, Fedora, Arch, openSUSE and their derivatives. Check with `systemctl --version`. Distros without systemd (Alpine, Void, Gentoo with OpenRC, Devuan) need their own tools, though `shutdown +N` and `at` still work on most of them.
+
+---
+
+## 🔒 Safety first: what sync does, and what really happens
+
+### What `sync` actually does
+
+`sync` flushes **cached file writes** (data the kernel is still holding in RAM, waiting to be written) to your disk. That is all it does.
+
+- It does **not** save your open documents or application state.
+- It does **not** "put processes into memory". Programs are not touched by `sync`.
+- Data an app has not yet written to a file (an unsaved document in an editor) is **not** affected by `sync`.
+
+You can see how much data is waiting to be written:
+
+```bash
+grep -E '^(Dirty|Writeback):' /proc/meminfo
+```
+
+### What each action does to your files and apps
+
+| | Power off / Reboot | Hibernate | Suspend |
+| :--- | :--- | :--- | :--- |
+| **Filesystems** | systemd syncs, then unmounts cleanly, then syncs again | the kernel syncs filesystems before freezing processes | synced by default (see `/sys/power/sync_on_suspend`, if your kernel has it) |
+| **Running apps** | stopped, then anything left gets `SIGTERM` and then `SIGKILL` | frozen, and their memory is written to swap in the hibernation image | frozen, memory stays powered in RAM |
+| **Unsaved work** | ⚠️ **lost** unless the app saves or prompts you | kept in the image, but only if the resume works | kept, but lost if power runs out |
+| **Power loss while off** | safe | safe | ❌ RAM state is lost |
+
+```mermaid
+flowchart LR
+    subgraph P["Power off or reboot"]
+        direction TB
+        P1["Stop services and sessions"] --> P2["sync"]
+        P2 --> P3["SIGTERM, then SIGKILL leftovers"]
+        P3 --> P4["Unmount filesystems"]
+        P4 --> P5["sync again"]
+        P5 --> P6["Power off or reboot"]
+    end
+    subgraph H["Hibernate"]
+        direction TB
+        H1["Kernel syncs filesystems"] --> H2["Freeze processes"]
+        H2 --> H3["Write RAM image to swap"]
+        H3 --> H4["Power off"]
+    end
+```
+
+### So do you need to add `sync` yourself?
+
+**Mostly no, but it is a cheap extra layer in the right place.**
+
+- **`shutdown` and `reboot`** go through systemd, which already syncs twice (before stopping the leftover processes and again just before the final power-off). Running `sync` yourself 30 minutes earlier is pointless, because writes continue during those 30 minutes. The sync that matters is the one at the moment of shutdown, and systemd does it.
+- **Hibernate** is synced by the kernel as its first step. Adding `sync &&` in front costs almost nothing and makes the intent explicit, so this guide does it in the hibernate examples.
+- The sync must run **when the action runs, not when you schedule it**. That is why the scheduled examples use `sh -c 'sync && systemctl ...'` instead of running `sync` before you press Enter.
+- `sync` helps most when **you** are about to do something forceful or manual, such as `systemctl ... -f`, a hard reset, or unplugging a drive.
+
+> [!TIP]
+> Sync only the filesystem that matters with `sync -f /path/on/that/fs`, or only file data with `sync -d`. Plain `sync` flushes everything and is the right default.
+
+### ⚠️ Options that skip the safe path
+
+| Option | What it skips |
+| :--- | :--- |
+| `reboot -n`, `poweroff -n`, `--no-sync` | the sync before power-off, reboot or halt |
+| `systemctl poweroff -f` / `reboot -f` | stopping services cleanly (processes are killed, filesystems unmounted or remounted read-only) |
+| `systemctl ... -ff`, `reboot -f` (the `reboot` command's `-f`) | systemd entirely: it does not contact the init system, and filesystems are mostly **not** properly unmounted |
+| `systemctl ... -i` / `--ignore-inhibitors` | the safety locks that apps take to block or delay shutdown and sleep |
+
+### Hibernate-specific dangers
+
+- **Do not touch the disks while hibernated.** Booting another OS (dual or multi-boot, a live USB) and mounting the same filesystems read-write can corrupt them, because the saved image assumes the disk is exactly as it was left.
+- **Do not change the swap or the `resume=` target** while an image exists.
+- **Do not unplug or swap storage** that was mounted when you hibernated.
+- If resume fails, the next boot is a **fresh session**, so unsaved work is gone. Test with `systemctl hibernate` first (see [Step 3](#-step-3-verify-and-test)).
+
+---
+
+## 📋 Pre-flight safety checklist
+
+Before scheduling anything, spend ten seconds on this.
+
+**1. Save your work.** Shutdown and reboot terminate your apps. Even with hibernate, do not rely on the resume working.
+
+**2. Is anything still working or mid-transaction?**
+
+```bash
+# Package managers, copies and backups still running?
+pgrep -a -x 'zypper|dnf|apt|apt-get|dpkg|pacman|rpm|rsync|dd|cp|mv'
+```
+
+> [!WARNING]
+> Never power off or reboot during a package upgrade, a firmware update, a `dd`/flash operation or an unfinished backup. Wait, or cancel the timer.
+
+**3. Who else is on the machine?**
+
+```bash
+loginctl list-sessions
+who
+```
+
+**4. Is something blocking shutdown or sleep?**
+
+```bash
+systemd-inhibit --list
+```
+
+Applications can take **inhibitor locks** so that a shutdown or sleep request fails (a running upgrade, or a media player, for example). A scheduled action will then fail instead of powering off. See [Troubleshooting](#-troubleshooting). Do not add `-i` to a scheduled job just to get around this.
+
+**5. Rehearse without doing it:**
+
+```bash
+# Only sends the warning message, does not shut down
+sudo shutdown -k +1 "Test message only"
+
+# Prints what would be done
+systemctl --dry-run hibernate
+```
+
+`--dry-run` shows what would happen but does **not** prove hibernate resumes correctly. Only a real `systemctl hibernate` test does that.
+
+**6. Warn anyone logged in.** `shutdown` sends a warning message by itself. `systemd-run` jobs do not, so send your own:
+
+```bash
+# Terminal warning to all logged-in users, 1 minute before a 30 minute timer
+sudo systemd-run --on-active=29m --description="hibernate warning" \
+  /bin/sh -c 'wall "This machine will hibernate in 1 minute. Save your work."'
+```
+
+For a desktop popup, a user-level timer usually works (on most desktops):
+
+```bash
+systemd-run --user --on-active=29m notify-send "Hibernating in 1 minute" "Save your work"
+```
 
 ---
 
@@ -131,6 +270,9 @@ sudo shutdown -P +10 "Powering off for maintenance"
 sudo shutdown -P now
 ```
 
+> [!NOTE]
+> You do not need to add `sync`. When the timer expires, systemd stops services, syncs, terminates leftover processes, unmounts filesystems and syncs again before powering off. Your **unsaved documents** are still not saved by any of this, so save first.
+
 <details>
 <summary>📌 Other options worth knowing</summary>
 
@@ -165,6 +307,14 @@ sudo systemctl poweroff --when=+30min
 > [!CAUTION]
 > With `--when`, a **time-only** value such as `06:00` means *today at 06:00*. If that moment has already passed, the machine powers off **immediately**. Use a relative value like `+30min` or a full date-time such as `2026-11-08T06:00:00`. `--when` is not available on older systemd (for example the one in Ubuntu 22.04). Check with `systemctl --version`.
 
+### Power off with an explicit `sync`
+
+If you want the sync to be visible and logged, run it at execution time:
+
+```bash
+sudo systemd-run --on-active=30m /bin/sh -c 'sync && systemctl poweroff'
+```
+
 ---
 
 ## 🔄 Reboot after N minutes/hours
@@ -186,11 +336,14 @@ sudo shutdown -r now
 sudo systemctl reboot --when=+15min
 ```
 
-Using `systemd-run` works too, and it accepts hours directly:
+Using `systemd-run` works too, accepts hours directly, and lets you sync first:
 
 ```bash
-sudo systemd-run --on-active=1h systemctl reboot
+sudo systemd-run --on-active=1h /bin/sh -c 'sync && systemctl reboot'
 ```
+
+> [!WARNING]
+> Do not schedule a reboot while a package upgrade is running or while an offline update is being prepared. Check with the [pre-flight checklist](#-pre-flight-safety-checklist).
 
 ---
 
@@ -359,29 +512,34 @@ cat /proc/cmdline | grep -o 'resume=[^ ]*'
 busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanHibernate
 ```
 
-The second command should answer `s "yes"`. Then save your work and test manually:
+The second command should answer `s "yes"`. Then save your work, run the [pre-flight checklist](#-pre-flight-safety-checklist), and test manually:
 
 ```bash
-systemctl hibernate
+sync && systemctl hibernate
 ```
 
 If the machine powers off and your session comes back after you power it on, hibernate works.
 
-### ⏲️ Step 4. Schedule it
+### ⏲️ Step 4. Schedule it (with sync)
 
 ```bash
 # Hibernate in 30 minutes
-sudo systemd-run --on-active=30m systemctl hibernate
+sudo systemd-run --on-active=30m /bin/sh -c 'sync && systemctl hibernate'
 
 # In 1 hour 30 minutes
-sudo systemd-run --on-active=1h30m systemctl hibernate
+sudo systemd-run --on-active=1h30m /bin/sh -c 'sync && systemctl hibernate'
 
 # In 45 seconds
-sudo systemd-run --on-active=45s systemctl hibernate
+sudo systemd-run --on-active=45s /bin/sh -c 'sync && systemctl hibernate'
 
 # With a name, so it is easy to inspect and cancel
-sudo systemd-run --unit=hibernate-later --on-active=30m systemctl hibernate
+sudo systemd-run --unit=hibernate-later --on-active=30m /bin/sh -c 'sync && systemctl hibernate'
 ```
+
+`&&` means hibernate only runs if `sync` succeeded. If `sync` fails (which points to an I/O problem), the machine stays on and the failure shows up in the journal, instead of powering off on top of a possible disk error.
+
+> [!NOTE]
+> The plain form `sudo systemd-run --on-active=30m systemctl hibernate` also works, because the kernel syncs filesystems itself as its first hibernate step. The `sync &&` version just makes it explicit and logged.
 
 `systemd-run` prints something like this:
 
@@ -397,7 +555,7 @@ Timers created this way are **transient**. They live in `/run` and disappear on 
 Use a full date and time so the timer fires **once**:
 
 ```bash
-sudo systemd-run --on-calendar="2026-11-08 23:30:00" systemctl hibernate
+sudo systemd-run --on-calendar="2026-11-08 23:30:00" /bin/sh -c 'sync && systemctl hibernate'
 ```
 
 > [!WARNING]
@@ -421,8 +579,8 @@ sudo systemctl enable --now atd
 Then schedule (runs as root because of `sudo`):
 
 ```bash
-echo "systemctl hibernate" | sudo at now + 30 minutes
-echo "systemctl hibernate" | sudo at 23:30
+echo "sync && systemctl hibernate" | sudo at now + 30 minutes
+echo "sync && systemctl hibernate" | sudo at 23:30
 
 # List and remove jobs
 sudo atq
@@ -432,13 +590,13 @@ sudo atrm <job-number>
 ### Alternative: plain `sleep`
 
 ```bash
-sleep 30m && systemctl hibernate
+sleep 30m && sync && systemctl hibernate
 ```
 
 Press `Ctrl+C` to cancel. It stops if you close the terminal, so use `nohup` or `systemd-run` if you need it to survive:
 
 ```bash
-nohup sh -c 'sleep 1800 && systemctl hibernate' >/dev/null 2>&1 &
+nohup sh -c 'sleep 1800 && sync && systemctl hibernate' >/dev/null 2>&1 &
 ```
 
 ---
@@ -465,8 +623,11 @@ If `HibernateDelaySec=` is not set, the default is 2 hours on current systemd ve
 > [!NOTE]
 > This is different from "do something in 30 minutes". `suspend-then-hibernate` suspends **immediately**, then hibernates after the delay. To start suspend-then-hibernate at a later time, combine it with a timer:
 > ```bash
-> sudo systemd-run --on-active=30m systemctl suspend-then-hibernate
+> sudo systemd-run --on-active=30m /bin/sh -c 'sync && systemctl suspend-then-hibernate'
 > ```
+
+> [!WARNING]
+> While suspended (before the delay ends), the machine still relies on RAM. A power cut or a flat battery in that window **loses your session**. That is the trade-off for fast resume.
 
 ---
 
@@ -492,6 +653,8 @@ For an unnamed timer, use the generated name that `systemd-run` printed:
 ```bash
 sudo systemctl stop run-p157689-i176593.timer
 ```
+
+If you also scheduled a warning timer, stop it too.
 
 ### `at` jobs
 
@@ -547,22 +710,31 @@ IdleActionSec=30min
 Apply it by rebooting (the safest way), or by restarting `systemd-logind`.
 
 > [!NOTE]
-> Desktop environments manage idle behavior themselves, so `IdleAction=` is unreliable on a desktop. Prefer the desktop's own setting there.
+> Desktop environments manage idle behavior themselves, so `IdleAction=` is unreliable on a desktop. Prefer the desktop's own setting there. Idle actions made by the desktop or logind go through the normal systemd path, so the kernel still syncs before hibernating.
 
 ---
 
-## 🧰 Handy shell function
+## 🧰 Safe shell function
 
-Add this to your `~/.bashrc` or `~/.zshrc`:
+Add this to your `~/.bashrc` or `~/.zshrc`. It validates the time and the action, then schedules the action **with a sync at the moment it runs**:
 
 ```bash
-# usage: after <time> <poweroff|reboot|hibernate|suspend-then-hibernate>
+# usage: after <time> <poweroff|reboot|hibernate|suspend|suspend-then-hibernate|hybrid-sleep>
 after() {
-  if [ $# -ne 2 ]; then
-    echo "usage: after <time> <poweroff|reboot|hibernate|suspend-then-hibernate>"
-    return 1
-  fi
-  sudo systemd-run --on-active="$1" --description="after $1: $2" systemctl "$2"
+  local usage="usage: after <time> <poweroff|reboot|hibernate|suspend|suspend-then-hibernate|hybrid-sleep>"
+  if [ $# -ne 2 ]; then echo "$usage" >&2; return 1; fi
+
+  local when="$1" action="$2"
+  case "$action" in
+    poweroff|reboot|hibernate|suspend|suspend-then-hibernate|hybrid-sleep) ;;
+    *) echo "$usage" >&2; return 1 ;;
+  esac
+
+  # Reject bad time spans before scheduling anything
+  systemd-analyze timespan "$when" >/dev/null || return 1
+
+  sudo systemd-run --on-active="$when" --description="after $when: $action" \
+    /bin/sh -c "sync && systemctl $action"
 }
 ```
 
@@ -583,9 +755,12 @@ after 45s suspend-then-hibernate
 | :--- | :--- | :--- |
 | `shutdown +1h` is rejected | `+m` only accepts minutes | Use `+60` |
 | `systemctl poweroff --when=06:00` shut down instantly | Time-only value in the past means "now" | Use `+30min` or a full date-time |
+| Timer fired but the machine did not shut down or sleep | An **inhibitor lock** is blocking it | `systemd-inhibit --list`, then `journalctl -u <unit>.service`. Fix or close the blocking program. Avoid blanket `-i` |
+| Unsaved work lost after a scheduled shutdown or reboot | Apps were terminated. `sync` only flushes files that were already written | Save first, or use hibernate if you want your session kept |
+| Filesystem check or errors on next boot | A forced power-off (`-ff`, `--no-sync`), a power cut, or another OS touched the disk during hibernation | Avoid forced options, never mount the same filesystems from another OS while hibernated, then run the filesystem's repair tool if needed |
 | `Hibernate` missing in the desktop menu | Swap or resume not set up, lockdown, or the desktop hides it | Complete [Step 1](#-step-1-prerequisites-all-distros), then test `systemctl hibernate` |
 | Machine powers off but boots a fresh session | `resume=` is wrong, missing, or points at the wrong UUID | Fix `resume=`, regenerate boot entries and initramfs, test again |
-| "Call to Hibernate failed" or "Not enough swap space" | Swap smaller than the memory image, or lockdown | Free memory, enlarge swap, check [lockdown](#-step-1-prerequisites-all-distros) |
+| "Call to Hibernate failed" or "Not enough swap space" | Swap smaller than the memory image, or lockdown | Free memory, enlarge swap, check lockdown |
 | Fedora: hibernate unavailable | Only zram swap, or Secure Boot lockdown | Add disk swap, add the dracut `resume` module, consider disabling Secure Boot |
 | Ubuntu swap file does not resume | Missing `resume_offset=` | Add `resume_offset=` to GRUB and update the initramfs |
 | `systemd-run` timer never fires | Timer was stopped, or the system rebooted | Transient timers do not survive reboots, recreate it |
@@ -617,10 +792,15 @@ sudo dmesg | grep -Ei 'hibernate|resume|swsusp|lockdown'
 ## 📚 References
 
 - [`shutdown(8)`](https://www.freedesktop.org/software/systemd/man/latest/shutdown.html): time formats and options
+- [`poweroff(8)` / `reboot(8)`](https://www.freedesktop.org/software/systemd/man/latest/poweroff.html): `--force`, `--no-sync`, `--no-wall`
+- [`systemctl(1)`](https://www.freedesktop.org/software/systemd/man/latest/systemctl.html): `--ignore-inhibitors`, `--dry-run`, `--when`
+- [`systemd-inhibit(1)`](https://www.freedesktop.org/software/systemd/man/latest/systemd-inhibit.html) and [Inhibitor Locks](https://systemd.io/INHIBITOR_LOCKS/): why a shutdown can be blocked
 - [`systemd-run(1)`](https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html): transient timers, `--on-active`, `--on-calendar`
 - [`systemd.time(7)`](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html): time spans, timestamps, calendar events
 - [`systemd-sleep.conf(5)`](https://www.freedesktop.org/software/systemd/man/latest/systemd-sleep.conf.html): `HibernateDelaySec=` and sleep modes
 - [`logind.conf(5)`](https://www.freedesktop.org/software/systemd/man/latest/logind.conf.html): `IdleAction=` and `IdleActionSec=`
+- [`sync(1)`](https://www.gnu.org/software/coreutils/sync): what `sync` flushes, and the `-f` and `-d` options
+- [Linux kernel docs: System sleep states](https://www.kernel.org/doc/html/latest/admin-guide/pm/sleep-states.html): suspend and hibernation
 - [Arch Wiki: Suspend and hibernate](https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate): hooks, `resume=`, swap files
 - [Fedora Magazine: Update on hibernation in Fedora Workstation](https://fedoramagazine.org/update-on-hibernation-in-fedora-workstation): zram, dracut, Secure Boot lockdown
 - [openSUSE Tumbleweed power management docs](https://doc.opensuse.org/documentation/tumbleweed/power/): swap and `resume=`
