@@ -5,7 +5,7 @@
 ### Practical, transparent Linux guides for people who want to know what's happening to their system.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Guides](https://img.shields.io/badge/Guides-19-success)](#-guide-index)
+[![Guides](https://img.shields.io/badge/Guides-20-success)](#-guide-index)
 [![Last commit](https://img.shields.io/github/last-commit/itachi-re/clean-system-guide?logo=git&logoColor=white&label=Last%20commit)](https://github.com/itachi-re/clean-system-guide/commits/main)
 [![Stars](https://img.shields.io/github/stars/itachi-re/clean-system-guide?logo=github&logoColor=white&label=Stars)](https://github.com/itachi-re/clean-system-guide/stargazers)
 [![Issues](https://img.shields.io/github/issues/itachi-re/clean-system-guide?logo=github&logoColor=white&label=Issues)](https://github.com/itachi-re/clean-system-guide/issues)
@@ -108,7 +108,7 @@ No build step, no dependencies, no tooling required — it's Markdown, meant to 
 
 ## 🗂 Guide Index
 
-**19 guides** across 8 topics, plus helper scripts.
+**20 guides** across 8 topics, plus helper scripts.
 
 ### 🖋 editors/
 
@@ -154,6 +154,7 @@ No build step, no dependencies, no tooling required — it's Markdown, meant to 
 |---|---|
 | [Clear System Cache](./system/clear-system-cache.md) | Safely reclaim memory and disk space without breaking anything |
 | [Offline Fedora Repository Guide](./system/offline-fedora-repository-guide.md) | Setting up and using local/offline repos on Fedora |
+| [Timed Power Actions](./system/timed-power-actions.md) | Scheduling shutdown, reboot, and hibernate after N minutes or hours, including the per-distro hibernate (`resume=`) setup |
 
 ### 🐚 shell/
 
@@ -205,6 +206,7 @@ Not sure which folder to look in? Start from what you're trying to do.
 | Fix Brave crashing, freezing, or rendering badly | [Brave Troubleshooting](./browsers/brave-linux-troubleshooting-guide.md) |
 | Free up disk space or memory safely | [Clear System Cache](./system/clear-system-cache.md) |
 | Use an offline or local repo on Fedora | [Offline Fedora Repository](./system/offline-fedora-repository-guide.md) |
+| Shut down, reboot, or hibernate after a delay | [Timed Power Actions](./system/timed-power-actions.md) |
 | Keep my dotfiles in git without manual linking | [GNU Stow Dotfiles](./shell/gnu-stow-dotfiles.md) |
 | Tame my terminal workflow | [Tmux Guide](./shell/tmux-guide.md) · [Shell Aliases](./shell/shell-aliases.md) |
 | Install an ISO-based Windows game cleanly | [Games from ISO with Lutris](./gaming/install-games-iso-lutris-linux.md) |
@@ -463,7 +465,7 @@ MIT — use it, fork it, adapt it. If it helps you run a system you actually und
 
 *"The best system is one you understand completely and control entirely."*
 
-<!-- Keep in sync with the "Guides" badge at the top and the Guide Index (currently 19). -->
-**Status:** Active · **Guides:** 19 · [![Last commit](https://img.shields.io/github/last-commit/itachi-re/clean-system-guide?style=flat-square&label=last%20commit)](https://github.com/itachi-re/clean-system-guide/commits/main)
+<!-- Keep in sync with the "Guides" badge at the top and the Guide Index (currently 20). -->
+**Status:** Active · **Guides:** 20 · [![Last commit](https://img.shields.io/github/last-commit/itachi-re/clean-system-guide?style=flat-square&label=last%20commit)](https://github.com/itachi-re/clean-system-guide/commits/main)
 
 </div>
